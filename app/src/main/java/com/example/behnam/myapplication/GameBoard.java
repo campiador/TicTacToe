@@ -9,8 +9,6 @@ import android.widget.Toast;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 
-import static android.content.ContentValues.TAG;
-
 /**
  * Created by behnam on 2/7/17.
  */
@@ -38,15 +36,6 @@ public class GameBoard {
 
     private int mGameState;
 
-    public int getCurrentPlayer() {
-        return mCurrentPlayer;
-    }
-
-    public void setCurrentPlayer(int currentPlayer) {
-        mCurrentPlayer = currentPlayer;
-        Log.d("LOG", "setCurrentPlayer: " + mCurrentPlayer);
-        mTextView.setText("Current player: " + stateToText(mCurrentPlayer));
-    }
 
     private int mCurrentPlayer;
 
@@ -59,41 +48,93 @@ public class GameBoard {
         mContext = context;
         mButtonList = buttonList;
         mTextView = tvResult;
+
         initGame();
+
     }
 
     public void initGame(){
         setGameState(IS_PLAYING);
         setCurrentPlayer(X);
+
         enableUI();
         clearUI();
     }
 
+    // no one should be allowed to change past moves!
+    public boolean isLegalMove(int buttonIndex) {
+        if (getButtonState(buttonIndex) == EMPTY) {
+            return true;
+        } else
+            return false;
+    }
 
-    public void playMove(int buttonIndex) {
+    private void updateUI(int buttonIndex) {
+        //Log.d("tag", "update UI" + buttonIndex);
+        setButtonState(buttonIndex, stateToText(mCurrentPlayer));
+    }
 
-        //if the game is over, we need a restart and should not play the move
-        if (gameOver()) {
-            return;
-        }
-        if (isLegal(buttonIndex)) {
-            updateUI(buttonIndex);
-            determineGbState();
-            if (gameOver()) {
-                disableUI();
-            } else {
-                flipCurrentPlayer();
+
+    /**
+     * Here we check to see if the game had a winner, and then update the gb state accordingly
+     *
+     * **/
+    private void determineGbState() {
+        if (    //check rows
+                (getButtonState(1) == getButtonState(2) && getButtonState(2) == getButtonState(3)
+                        && getButtonState(1) != EMPTY)
+
+                        || (getButtonState(4) == getButtonState(5) && getButtonState(5) == getButtonState(6)
+                        && getButtonState(4) != EMPTY)
+
+                        || (getButtonState(7) == getButtonState(8) && getButtonState(8) == getButtonState(9)
+                        && getButtonState(7) != EMPTY)
+
+                        //check columns
+                        || (getButtonState(1) == getButtonState(4) && getButtonState(4) == getButtonState(7)
+                        && getButtonState(1) != EMPTY)
+
+                        || (getButtonState(2) == getButtonState(5) && getButtonState(5) == getButtonState(8)
+                        && getButtonState(2) != EMPTY)
+
+                        || (getButtonState(3) == getButtonState(6) && getButtonState(6) == getButtonState(9)
+                        && getButtonState(3) != EMPTY)
+
+
+                        //check diagonals
+                        || (getButtonState(1) == getButtonState(5) && getButtonState(5) == getButtonState(9)
+                        && getButtonState(1) != EMPTY)
+                        || (getButtonState(3) == getButtonState(5) && getButtonState(5) == getButtonState(7)
+                        && getButtonState(3) != EMPTY)
+                ) {
+            if (mCurrentPlayer == X) {
+                setGameState(X_WON);
+            } else if (mCurrentPlayer == O) {
+                setGameState(O_WON);
             }
-
-        } else {
-            Toast.makeText(mContext, "Illegal move: " + (buttonIndex + 1),
-                    Toast.LENGTH_SHORT).show();
-
         }
+        else if (isBoardFull()) {
+            setGameState(DRAW);
+        } else setGameState(IS_PLAYING);
+
     }
 
     private boolean gameOver() {
         return !isPlaying();
+    }
+
+    private void showResults() {
+        if (mGameState == X_WON) {
+            mTextView.setText("Player X wins!");
+        } else if (mGameState == O_WON) {
+            mTextView.setText("Player O wins!");
+        } else if(mGameState == DRAW) {
+            mTextView.setText("Draw!");
+        }
+    }
+    
+    public void restartGame() {
+        initGame();
     }
 
     private void clearUI(){
@@ -118,45 +159,6 @@ public class GameBoard {
         }
     }
 
-    /**
- * Here we check to see if the game had a winner, and then update the gb state accordingly
- *
- * **/
-    private void determineGbState() {
-        if (    //check rows
-                   (getButtonState(0) == getButtonState(1) && getButtonState(1) == getButtonState(2)
-                           && getButtonState(0) != EMPTY)
-                || (getButtonState(3) == getButtonState(4) && getButtonState(4) == getButtonState(5)
-                           && getButtonState(3) != EMPTY)
-                || (getButtonState(6) == getButtonState(7) && getButtonState(7) == getButtonState(8)
-                           && getButtonState(6) != EMPTY)
-
-                //check columns
-                || (getButtonState(0) == getButtonState(3) && getButtonState(3) == getButtonState(6)
-                           && getButtonState(0) != EMPTY)
-                || (getButtonState(1) == getButtonState(4) && getButtonState(4) == getButtonState(7)
-                           && getButtonState(1) != EMPTY)
-                || (getButtonState(2) == getButtonState(5) && getButtonState(5) == getButtonState(8)
-                           && getButtonState(2) != EMPTY)
-
-
-                //check diagonals
-                || (getButtonState(0) == getButtonState(4) && getButtonState(4) == getButtonState(8)
-                           && getButtonState(0) != EMPTY)
-                || (getButtonState(2) == getButtonState(4) && getButtonState(4) == getButtonState(6)
-                           && getButtonState(2) != EMPTY)
-                ) {
-            if (mCurrentPlayer == X) {
-                setGameState(X_WON);
-            } else if (mCurrentPlayer == O) {
-                setGameState(O_WON);
-            }
-        }
-        else if (isBoardFull()) {
-            setGameState(DRAW);
-        } else setGameState(IS_PLAYING);
-
-    }
 
     private boolean isBoardFull() {
         for (Button button : mButtonList
@@ -169,10 +171,7 @@ public class GameBoard {
         return true;
     }
 
-    private void updateUI(int buttonIndex) {
-        Log.d("tag", "update UI" + buttonIndex);
-        mButtonList.get(buttonIndex).setText(stateToText(mCurrentPlayer));
-    }
+
 
     private String stateToText(int state) {
         try {
@@ -211,16 +210,15 @@ public class GameBoard {
 
 
 
-    public boolean isLegal(int buttonIndex) {
-        Button clickedButton = mButtonList.get(buttonIndex);
-        if (clickedButton.getText().equals(EMPTY_TEXT)) {
-            return true;
-        } else
-            return false;
+    //note the index decrement
+    private void setButtonState(int index, String text) {
+        mButtonList.get(index-1).setText(text);
+
     }
 
+    //note that the index should be decremented
     private int getButtonState(int index) {
-        return textToState(mButtonList.get(index).getText().toString());
+        return textToState(mButtonList.get(index-1).getText().toString());
     }
 
 
@@ -230,15 +228,18 @@ public class GameBoard {
 
     public void setGameState(int gameState) {
         mGameState = gameState;
-
-        if (mGameState == X_WON) {
-            mTextView.setText("Player X wins!");
-        } else if (mGameState == O_WON) {
-            mTextView.setText("Player O wins!");
-        } else if(mGameState == DRAW) {
-            mTextView.setText("Draw!");
-        }
     }
+
+    public int getCurrentPlayer() {
+        return mCurrentPlayer;
+    }
+
+    public void setCurrentPlayer(int currentPlayer) {
+        mCurrentPlayer = currentPlayer;
+//        Log.d("LOG", "setCurrentPlayer: " + mCurrentPlayer);
+        mTextView.setText("Current player: " + stateToText(mCurrentPlayer));
+    }
+
 
     private void flipCurrentPlayer() {
         if (mCurrentPlayer == X) {
@@ -250,14 +251,32 @@ public class GameBoard {
 
     private boolean isPlaying(){
         if (getGameState() == IS_PLAYING) {
-            Log.d(TAG, "isPlaying returns true");
+//            Log.d(TAG, "isPlaying returns true");
             return true;
         }
         return false;
 
     }
 
-    public void restartGame() {
-        initGame();
+
+    public void playMove(int buttonIndex) {
+
+        if (isLegalMove(buttonIndex)) {
+            updateUI(buttonIndex);
+            determineGbState();
+            if (gameOver()) {
+                showResults();
+                disableUI();
+            } else {
+                flipCurrentPlayer();
+            }
+
+        } else {
+            Toast.makeText(mContext, "Illegal move: " + (buttonIndex),
+                    Toast.LENGTH_SHORT).show();
+
+        }
     }
+
+
 }

@@ -74,45 +74,45 @@ public class MainActivity extends AppCompatActivity {
 
                 switch (v.getId()) {
                     case R.id.button1:
-                        index = 0;
+                        index = 1;
 
                         break;
 
                     case R.id.button2:
-                        index = 1;
-                        break;
-
-                    case R.id.button3:
                         index = 2;
                         break;
 
-                    case R.id.button4:
-                        index =3;
-
+                    case R.id.button3:
+                        index = 3;
                         break;
 
-                    case R.id.button5:
+                    case R.id.button4:
                         index = 4;
 
                         break;
 
-                    case R.id.button6:
+                    case R.id.button5:
                         index = 5;
 
                         break;
 
-                    case R.id.button7:
+                    case R.id.button6:
                         index = 6;
 
                         break;
 
-                    case R.id.button8:
+                    case R.id.button7:
                         index = 7;
 
                         break;
 
-                    case R.id.button9:
+                    case R.id.button8:
                         index = 8;
+
+                        break;
+
+                    case R.id.button9:
+                        index = 9;
 
                         break;
 
